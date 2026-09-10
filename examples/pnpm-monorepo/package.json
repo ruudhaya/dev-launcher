@@ -1,0 +1,11 @@
+{
+  "name": "example-pnpm-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "pnpm --filter @example/web dev"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11"
+  }
+}

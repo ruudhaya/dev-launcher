@@ -1,0 +1,12 @@
+{
+  "name": "@example/admin",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 4002"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11"
+  }
+}

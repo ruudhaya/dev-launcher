@@ -1,0 +1,12 @@
+# Workspace members. NOTE: examples/* are intentionally excluded — each fixture is a
+# standalone project with its own lockfile, installed on demand by e2e tests.
+packages:
+  - "packages/*"
+  - "apps/*"
+
+# Native dev-tooling deps allowed to run install scripts (esbuild fetches its
+# platform binary, sharp its libvips binary). The published `devlaunch` package
+# itself has no build/lifecycle scripts.
+allowBuilds:
+  esbuild: true
+  sharp: true
