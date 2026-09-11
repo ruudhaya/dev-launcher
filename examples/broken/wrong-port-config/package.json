@@ -1,0 +1,12 @@
+{
+  "name": "broken-wrong-port-config",
+  "private": true,
+  "version": "0.0.0",
+  "description": "The server starts and stays up, but the configured port doesn't match the port it actually listens on. Exercises READY_TIMEOUT.",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "launcher": {
+    "port": 9999
+  }
+}

@@ -14,6 +14,19 @@ The e2e job installs them on demand.
 | `next-app/` | pnpm (`pnpm-lock.yaml`) | Next.js app router, framework-default port |
 | `pnpm-monorepo/` | pnpm workspace (`pnpm-workspace.yaml`) | Multiple apps under `apps/`, pick one |
 
+### `broken/` — one failure mode each
+
+Used by `packages/core`'s error-path tests and the runtime smoke script. Each one
+is designed to fail exactly one way, deterministically, regardless of the machine
+it runs on.
+
+| Fixture | Fails how | Expected error code |
+| --- | --- | --- |
+| `broken/missing-dependency/` | `preinstall` script always exits 1, so `npm install` never completes | `DEPS_INSTALL_FAILED` |
+| `broken/crash-on-start/` | Install succeeds; `npm run dev` exits immediately, before listening on any port | `SERVER_EXITED_EARLY` |
+| `broken/wrong-port-config/` | Server starts and stays up, but listens on a different port than `launcher.port` in `package.json` | `READY_TIMEOUT` |
+| `broken/node-version-mismatch/` | `.nvmrc` / `engines.node` request Node `99.99.99`, which doesn't exist | `NODE_VERSION_MISSING` |
+
 ## Running one by hand
 
 ```sh
@@ -33,4 +46,13 @@ npm run dev
 
 # pnpm-monorepo
 ( cd examples/pnpm-monorepo && pnpm install --lockfile-only )
+
+# broken/missing-dependency — use --ignore-scripts or the preinstall failure
+# fires during lockfile generation too
+( cd examples/broken/missing-dependency && npm install --package-lock-only --ignore-scripts )
+
+# broken/crash-on-start, broken/wrong-port-config, broken/node-version-mismatch
+( cd examples/broken/crash-on-start && npm install --package-lock-only )
+( cd examples/broken/wrong-port-config && npm install --package-lock-only )
+( cd examples/broken/node-version-mismatch && npm install --package-lock-only )
 ```

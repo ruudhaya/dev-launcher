@@ -4,18 +4,19 @@ Context for future sessions working in this repo. Read this first.
 
 ## What devlaunch is
 
-devlaunch turns any local dev server into a macOS app you launch from Spotlight.
+devlaunch turns any local web project into a macOS app that opens from Spotlight,
+starts the dev server, and opens the browser once the app is ready.
 
-A developer runs `npx devlaunch init` in a project. The tool detects the package
-manager, dev script, framework, port, and Node version, then generates a small `.app`
-bundle in `~/Applications`. Typing the project name in Spotlight starts the dev
-server and opens the browser once the port is ready.
+**Two launches**
 
-**Audiences**
-
-- Developers who want to stop opening an IDE or terminal just to run a dev server.
-- Non-technical teammates (designers, PMs, QA) who need the app running locally.
-- Maintainers / eng leads who want one-line onboarding for their repo.
+- **Launch 1 (current):** developers and the non-developers they work with
+  (designers, PMs, QA). Pitch: stop opening an IDE and terminal just to run your
+  app, and give your teammates a one-click way to run it. The CLI is agent-ready
+  from day one (JSON output, exit codes, error catalog) and ships with an Agent
+  Skill so coding agents can set it up.
+- **Launch 2 (next):** people who build web apps with AI agents and aren't
+  developers. Adds plain-language dialogs, "Ask AI to fix this", Keychain secrets
+  with a setup assistant, and a skill tuned for them.
 
 **Two tracks in this repo**
 
@@ -63,19 +64,20 @@ pnpm --filter @devlaunch/runtime lint:shell
 pnpm --filter @devlaunch/runtime test:shell
 ```
 
-## Non-negotiable product principles
+## Principles
 
-- **No system modification from `npm install`.** No `postinstall` / lifecycle hooks,
-  no native modules. Installing the package must never change the user's machine.
-- **No silent failures.** Every failure an end user can hit produces a native macOS
-  dialog with an action to take — never a silent exit, never a bare stack trace.
-- **Generated launchers carry no secrets.** They contain only absolute paths on the
-  user's own machine. Nothing machine-specific is ever written into a user's repo or
-  committed.
-- **Non-macOS exits cleanly.** On any non-macOS platform the CLI prints a friendly
-  message and exits 0-ish without crashing.
-- **Adoption is reversible.** Every change the tool makes to the system has a
-  documented undo command (`devlaunch remove`).
+1. **Agent-ready contract:** every command supports `--json`, non-interactive use,
+   `--dry-run` where it changes anything, and stable exit codes.
+2. **One error catalog** in `packages/core` feeds dialogs, CLI output, docs, and the
+   skill. Generated files are never edited by hand.
+3. **No postinstall hooks.** Non-macOS platforms exit cleanly with a friendly message.
+4. **Every change devlaunch makes has an undo command.**
+5. **Reports and logs shown to users are redacted of secret values.** devlaunch
+   never stores secret values in Launch 1; projects keep using their own `.env`.
+6. **Nothing is exposed to the network by default.**
+7. **Core is platform-neutral;** macOS specifics sit behind a platform adapter.
+8. **All user-facing strings live in one place,** so Launch 2 can rewrite them in
+   plain language without touching logic.
 
 ## Conventions
 
@@ -88,8 +90,37 @@ pnpm --filter @devlaunch/runtime test:shell
 - Keep the `core` / `cli` boundary strict: if you find yourself importing `node:fs`
   prompts or writing to stdout inside `core`, move it to `cli`.
 
+## Launches and milestones
+
+| Milestone | Scope | Status |
+| --- | --- | --- |
+| M1: works on my Mac | L1-1 core engine, L1-2 launcher runtime, L1-3 CLI | Not started |
+| M2: team- and agent-ready | L1-4 team onboarding, L1-5 developer Agent Skill | Not started |
+| M3: a stranger can do it | L1-6 release, README, site | Not started |
+| M4: launch | L1-7 launch kit | Not started |
+| Launch 2 | L2-1 plain language + fix loop, L2-2 secrets, L2-3 AI-builder skill + evals, L2-4 messaging + landing page, L2-5 launch kit | Not started |
+
+Full prompt-by-prompt detail lives in `devlaunch-claude-code-prompts-v3.md`.
+
+## Scope rule
+
+Do not build anything in `LATER.md` unless a prompt explicitly promotes it out of
+that file and into the current milestone.
+
 ## Status
 
-Scaffold only. `core.detectProject`, the `cli` commands, and the `runtime` templates
-are placeholders with `NOT_IMPLEMENTED` / TODO markers. The public `README.md`,
-`marketing/messaging.md`, and real site content are later sessions.
+**Current prompt:** L1-0 (Realign the repo) — done.
+
+**Done:**
+- Prompt 1: monorepo scaffold (workspace, tooling, placeholder packages).
+- L1-0: rewrote this file's product context and principles for the two-launch
+  plan; added the Launches/Status/Scope sections; created `LATER.md`,
+  `docs/roadmap.md`, `docs/decisions/0001-two-launches.md`; added
+  `examples/broken/` fixtures (missing-dependency, crash-on-start,
+  wrong-port-config, node-version-mismatch) for error-path tests.
+
+**Next:** L1-1 — build `packages/core`: error catalog, redaction, detection
+(including the `.claude/launch.json` importer), config resolution, report
+builder, platform adapter, bundle plan.
+
+**Open questions:** none yet.

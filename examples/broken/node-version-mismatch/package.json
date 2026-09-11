@@ -1,0 +1,12 @@
+{
+  "name": "broken-node-version-mismatch",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Requests a Node version no one has installed. Exercises NODE_VERSION_MISSING.",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": "99.99.99"
+  }
+}

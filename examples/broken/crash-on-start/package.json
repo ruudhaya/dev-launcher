@@ -1,0 +1,9 @@
+{
+  "name": "broken-crash-on-start",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Installs fine, then the dev server exits immediately. Exercises SERVER_EXITED_EARLY.",
+  "scripts": {
+    "dev": "node server.js"
+  }
+}

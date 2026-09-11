@@ -1,0 +1,10 @@
+{
+  "name": "broken-missing-dependency",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Fails during dependency install, before the dev server ever starts. Exercises DEPS_INSTALL_FAILED.",
+  "scripts": {
+    "preinstall": "node -e \"console.error('simulated failure: broken-missing-dependency always fails to install'); process.exit(1)\"",
+    "dev": "node server.js"
+  }
+}
