@@ -68,7 +68,6 @@ export {
   getErrorEntry,
   listErrorEntries,
 } from './errors/index.js';
-
 export type { SecretPattern } from './redact/index.js';
 export {
   collectSecretValues,
@@ -80,3 +79,5 @@ export {
   redactText,
   SECRET_PATTERNS,
 } from './redact/index.js';
+export type { ReportEnvironment, ReportInput } from './report/index.js';
+export { buildReport, MAX_REPORT_CHARACTERS, REPORT_LOG_LINE_LIMIT } from './report/index.js';

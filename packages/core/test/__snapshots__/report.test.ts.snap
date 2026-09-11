@@ -1,0 +1,141 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildReport — snapshots per broken fixture > examples/broken/crash-on-start (SERVER_EXITED_EARLY) 1`] = `
+"devlaunch report v1
+
+Summary: The dev server process exited immediately after starting.
+
+Error: SERVER_EXITED_EARLY — The dev server stopped unexpectedly
+For coding agents: Run \`devlaunch logs --json --tail 80\` and look at the last lines before the process exited — this is almost always a stack trace or a config error in the project itself. Fix it there; devlaunch is only reporting what the project did.
+
+Steps attempted:
+1. resolved Node version
+2. installed dependencies
+3. started npm run dev
+
+Environment:
+- macOS: 14.5
+- Architecture: arm64
+- Node: 20.11.0 (from nvmrc)
+- Package manager: npm
+- devlaunch: 0.0.0
+
+Config:
+- name: "broken-crash-on-start"
+- script: "dev"
+- mode: "terminal"
+
+Logs (last 1 lines, redacted):
+\`\`\`
+simulated crash: broken-crash-on-start always exits immediately
+\`\`\`
+
+Run \`npx devlaunch doctor --json\` for a full environment check.
+"
+`;
+
+exports[`buildReport — snapshots per broken fixture > examples/broken/missing-dependency (DEPS_INSTALL_FAILED) 1`] = `
+"devlaunch report v1
+
+Summary: npm install failed before the dev server could start.
+
+Error: DEPS_INSTALL_FAILED — This project's dependencies failed to install
+For coding agents: Run \`devlaunch logs --json\` and read the install output. Common causes: a broken lockfile, a lifecycle script that fails outside a real network/registry, or a private registry needing auth. Fix the underlying issue in the project, then retry.
+
+Steps attempted:
+1. resolved Node version
+2. ran npm install
+
+Environment:
+- macOS: 14.5
+- Architecture: arm64
+- Node: 20.11.0 (from nvmrc)
+- Package manager: npm
+- devlaunch: 0.0.0
+
+Config:
+- name: "broken-missing-dependency"
+- script: "dev"
+- mode: "terminal"
+
+Logs (last 5 lines, redacted):
+\`\`\`
+> broken-missing-dependency@0.0.0 preinstall
+> node -e "console.error('simulated failure...'); process.exit(1)"
+simulated failure: broken-missing-dependency always fails to install
+npm error code 1
+npm error command failed
+\`\`\`
+
+Run \`npx devlaunch doctor --json\` for a full environment check.
+"
+`;
+
+exports[`buildReport — snapshots per broken fixture > examples/broken/node-version-mismatch (NODE_VERSION_MISSING) 1`] = `
+"devlaunch report v1
+
+Summary: This project requires a Node.js version that is not installed.
+
+Error: NODE_VERSION_MISSING — The required Node.js version is not installed
+For coding agents: Read the requested version from developerDetail. If the user has nvm/fnm/volta, ask them to run the install command for that tool (e.g. \`nvm install <version>\`) then retry \`devlaunch open\`. Do not silently fall back to a different version.
+
+Steps attempted:
+1. read .nvmrc (99.99.99)
+2. checked installed Node versions
+
+Environment:
+- macOS: 14.5
+- Architecture: arm64
+- Node: not found
+- Package manager: npm
+- devlaunch: 0.0.0
+
+Config:
+- name: "broken-node-version-mismatch"
+- script: "dev"
+- mode: "terminal"
+
+Logs (last 0 lines, redacted):
+\`\`\`
+
+\`\`\`
+
+Run \`npx devlaunch doctor --json\` for a full environment check.
+"
+`;
+
+exports[`buildReport — snapshots per broken fixture > examples/broken/wrong-port-config (READY_TIMEOUT) 1`] = `
+"devlaunch report v1
+
+Summary: The dev server never became ready on the configured port.
+
+Error: READY_TIMEOUT — The dev server is taking too long to start
+For coding agents: Check whether the configured port actually matches what the dev server binds to (a common cause), and whether the framework's ready-line format changed. Increase "readyTimeoutSeconds" in config only after ruling those out.
+
+Steps attempted:
+1. resolved Node version
+2. installed dependencies
+3. started npm run dev
+4. polled port 9999 for 90 seconds
+
+Environment:
+- macOS: 14.5
+- Architecture: arm64
+- Node: 20.11.0 (from nvmrc)
+- Package manager: npm
+- devlaunch: 0.0.0
+
+Config:
+- name: "broken-wrong-port-config"
+- script: "dev"
+- port: 9999
+- mode: "terminal"
+
+Logs (last 1 lines, redacted):
+\`\`\`
+Local: http://localhost:4321
+\`\`\`
+
+Run \`npx devlaunch doctor --json\` for a full environment check.
+"
+`;
