@@ -5,7 +5,11 @@
  *   - Never touches process.stdout / process.stderr.
  *   - Never prompts, never reads argv, never calls process.exit.
  *   - Returns plain data and typed errors; the CLI owns all I/O and presentation.
- *   - Reading the filesystem (detection) is fine; writing to it is not, yet.
+ *   - Reading the filesystem (detection) is fine anywhere in here. Writing to
+ *     it, spawning a process, or showing UI happens only inside the platform
+ *     adapter (src/platform) — that's the one place allowed to touch the
+ *     real machine, behind an interface the rest of core never needs to know
+ *     is macOS-specific, and that tests can swap for a mock.
  */
 
 export const CORE_VERSION = '0.0.0';
@@ -68,6 +72,24 @@ export {
   getErrorEntry,
   listErrorEntries,
 } from './errors/index.js';
+export type {
+  BundleFile,
+  CommandResult,
+  CommandRunner,
+  CreatePlatformAdapterOptions,
+  DialogOptions,
+  DialogResult,
+  MacosPlatformAdapterOptions,
+  NotificationOptions,
+  PlatformAdapter,
+  WriteBundleOptions,
+} from './platform/index.js';
+export {
+  createMacosPlatformAdapter,
+  createPlatformAdapter,
+  createSystemCommandRunner,
+  createUnsupportedPlatformAdapter,
+} from './platform/index.js';
 export type { SecretPattern } from './redact/index.js';
 export {
   collectSecretValues,
