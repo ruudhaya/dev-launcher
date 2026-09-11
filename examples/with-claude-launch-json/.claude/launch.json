@@ -1,0 +1,13 @@
+{
+  // Written by the Claude Code desktop app for its Preview pane.
+  // devlaunch reads this file to detect a run command; it never edits it.
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "example-with-claude-launch-json",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 4173
+    }
+  ]
+}

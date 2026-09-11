@@ -1,0 +1,9 @@
+{
+  "name": "example-with-claude-launch-json",
+  "private": true,
+  "version": "0.0.0",
+  "description": "No package.json dev script on purpose — devlaunch must find its run command by importing .claude/launch.json instead.",
+  "scripts": {
+    "build": "echo 'nothing to build in this fixture'"
+  }
+}
