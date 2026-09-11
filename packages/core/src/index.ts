@@ -18,3 +18,15 @@ export {
   getErrorEntry,
   listErrorEntries,
 } from './errors/index.js';
+
+export type { SecretPattern } from './redact/index.js';
+export {
+  collectSecretValues,
+  createRedactor,
+  MIN_SECRET_VALUE_LENGTH,
+  parseEnvFile,
+  redactKnownValues,
+  redactPatterns,
+  redactText,
+  SECRET_PATTERNS,
+} from './redact/index.js';
