@@ -21,6 +21,8 @@ import { detectWorkspaceApps } from './workspace.js';
 
 export interface ProjectDetection {
   readonly projectDir: string;
+  /** package.json's own "name" field, if it has one — config uses this as a naming default. */
+  readonly projectName: string | undefined;
   readonly packageManager: PackageManager;
   readonly devScriptCandidates: readonly DevScriptCandidate[];
   /** The best-guess dev script — undefined if only an imported run config supplies one. */
@@ -100,6 +102,7 @@ export function detectProject(projectDir: string): ProjectDetection {
 
   return {
     projectDir,
+    projectName: packageJson.name,
     packageManager: detectPackageManager(projectDir, packageJson),
     devScriptCandidates,
     devScript,

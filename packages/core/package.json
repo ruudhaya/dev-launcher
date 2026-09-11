@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src test",
     "test": "vitest run",
-    "generate": "pnpm build && node scripts/generate-error-docs.mjs"
+    "generate": "pnpm build && node scripts/generate-error-docs.mjs && node scripts/generate-config-schema.mjs"
   },
   "devDependencies": {
     "tsup": "^8.3.5",

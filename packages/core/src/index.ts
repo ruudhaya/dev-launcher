@@ -11,6 +11,25 @@
 export const CORE_VERSION = '0.0.0';
 
 export type {
+  LauncherConfigFields,
+  LauncherMode,
+  RawLauncherConfig,
+  ResolveConfigOptions,
+  ResolvedLauncherConfig,
+} from './config/index.js';
+export {
+  buildDefaultsFromDetection,
+  CONFIG_SCHEMA,
+  DEFAULT_MODE,
+  DEFAULT_OPEN_PATH,
+  DEFAULT_READY_TIMEOUT_SECONDS,
+  generateConfigSchemaJson,
+  resolveConfig,
+  validateLauncherConfigFields,
+  validateRawLauncherConfig,
+} from './config/index.js';
+
+export type {
   DevScriptCandidate,
   FrameworkInfo,
   IconCandidate,
