@@ -19,7 +19,8 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src test",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate": "pnpm build && node scripts/generate-error-docs.mjs"
   },
   "devDependencies": {
     "tsup": "^8.3.5",
