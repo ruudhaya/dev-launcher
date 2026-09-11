@@ -13,6 +13,7 @@ The e2e job installs them on demand.
 | `vite-react/` | npm (`package-lock.json`, `.nvmrc`) | Vite + React, explicit port, pinned Node |
 | `next-app/` | pnpm (`pnpm-lock.yaml`) | Next.js app router, framework-default port |
 | `pnpm-monorepo/` | pnpm workspace (`pnpm-workspace.yaml`) | Multiple apps under `apps/`, pick one |
+| `with-claude-launch-json/` | npm (`package-lock.json`) | No dev script in `package.json` — only launchable by importing `.claude/launch.json` |
 
 ### `broken/` — one failure mode each
 
@@ -55,4 +56,7 @@ npm run dev
 ( cd examples/broken/crash-on-start && npm install --package-lock-only )
 ( cd examples/broken/wrong-port-config && npm install --package-lock-only )
 ( cd examples/broken/node-version-mismatch && npm install --package-lock-only )
+
+# with-claude-launch-json
+( cd examples/with-claude-launch-json && npm install --package-lock-only )
 ```
