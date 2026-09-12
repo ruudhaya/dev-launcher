@@ -55,3 +55,5 @@ jobs:
       - run: pnpm --filter devlaunch build
       # Placeholder no-op suite for now — it exists so this job is wired up.
       - run: pnpm --filter devlaunch test:e2e
+      - name: Launcher runtime smoke test
+        run: ./scripts/smoke-macos.sh

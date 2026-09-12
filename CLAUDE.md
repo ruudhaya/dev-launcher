@@ -59,9 +59,16 @@ node packages/cli/dist/index.js --help
 # run the site
 pnpm --filter @devlaunch/site dev
 
-# shell templates (needs shellcheck + bats-core installed)
+# shell templates (needs shellcheck + bats-core installed: `brew install shellcheck bats-core`)
 pnpm --filter @devlaunch/runtime lint:shell
 pnpm --filter @devlaunch/runtime test:shell
+
+# macOS-only: real end-to-end smoke test — generates real bundles (via
+# @devlaunch/core directly; there's no CLI yet) for a few examples/*
+# projects and every examples/broken/* fixture, and drives the real
+# launcher.sh against them. Takes over real ports and starts real dialogs
+# it force-kills itself — don't run two at once.
+pnpm build && pnpm smoke:macos
 ```
 
 ## Principles
