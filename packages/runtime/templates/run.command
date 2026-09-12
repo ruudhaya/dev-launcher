@@ -7,7 +7,7 @@
 
 set -eu
 
-BUNDLE_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+BUNDLE_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
 echo "devlaunch: this is a placeholder wrapper in ${BUNDLE_DIR}"
 echo "devlaunch: the generated version will exec the bundled launcher.sh"

@@ -1,0 +1,17 @@
+#!/bin/sh
+# Mock lsof. Reports a port as "listening" (with a controllable PID) only
+# when $MOCK_STATE_DIR/listening-port matches the requested -iTCP:<port>.
+set -eu
+
+port=""
+for a in "$@"; do
+  case "${a}" in
+    -iTCP:*) port="${a#-iTCP:}" ;;
+  esac
+done
+
+state_port=$(cat "${MOCK_STATE_DIR}/listening-port" 2>/dev/null || printf '')
+if [ -n "${port}" ] && [ "${port}" = "${state_port}" ]; then
+  cat "${MOCK_STATE_DIR}/listening-pid" 2>/dev/null || printf '99999\n'
+fi
+exit 0

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Mock open. Records every call so a test can assert what URL/path it opened.
+set -eu
+{
+  printf 'CALL:'
+  for a in "$@"; do printf ' [%s]' "$a"; done
+  printf '\n'
+} >>"${MOCK_STATE_DIR}/open-calls.log"
+exit 0

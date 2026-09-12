@@ -1,0 +1,39 @@
+#!/bin/sh
+# Mock osascript for bats tests. Records every call; answers dialogs and
+# "choose folder" prompts from files under $MOCK_STATE_DIR that a test writes
+# before invoking the launcher.
+set -eu
+
+{
+  printf 'CALL:'
+  for a in "$@"; do printf ' [%s]' "$a"; done
+  printf '\n'
+} >>"${MOCK_STATE_DIR}/osascript-calls.log"
+
+script=""
+prev=""
+for a in "$@"; do
+  [ "${prev}" = "-e" ] && script="$a"
+  prev="$a"
+done
+
+case "${script}" in
+  "display dialog"*)
+    if [ -f "${MOCK_STATE_DIR}/dialog-cancel" ]; then
+      exit 1
+    fi
+    button=$(cat "${MOCK_STATE_DIR}/dialog-button" 2>/dev/null || printf 'Cancel')
+    printf 'button returned:%s\n' "${button}"
+    exit 0
+    ;;
+  "POSIX path of"*)
+    if [ -f "${MOCK_STATE_DIR}/chosen-folder" ]; then
+      cat "${MOCK_STATE_DIR}/chosen-folder"
+      exit 0
+    fi
+    exit 1
+    ;;
+  *)
+    exit 0
+    ;;
+esac

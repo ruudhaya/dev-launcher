@@ -1,0 +1,33 @@
+#!/bin/sh
+# Mock package manager (same content installed as npm/pnpm/yarn/bun — see
+# generate-mock-bin.sh). Handles the two subcommands launcher.sh uses:
+#   install         -> exits with $MOCK_STATE_DIR/install-exit-code (default 0)
+#   run <script>    -> runs $MOCK_STATE_DIR/server-behavior.sh if present,
+#                      otherwise prints a ready line and idles.
+set -eu
+
+{
+  printf 'CALL(%s):' "$(basename "$0")"
+  for a in "$@"; do printf ' [%s]' "$a"; done
+  printf '\n'
+} >>"${MOCK_STATE_DIR}/pm-calls.log"
+
+cmd="${1:-}"
+shift || true
+
+case "${cmd}" in
+  install)
+    code=$(cat "${MOCK_STATE_DIR}/install-exit-code" 2>/dev/null || printf '0')
+    exit "${code}"
+    ;;
+  run)
+    if [ -x "${MOCK_STATE_DIR}/server-behavior.sh" ]; then
+      exec "${MOCK_STATE_DIR}/server-behavior.sh"
+    fi
+    printf 'Local: http://localhost:%s\n' "${DEVLAUNCH_PORT:-3000}"
+    while true; do sleep 1; done
+    ;;
+  *)
+    exit 0
+    ;;
+esac

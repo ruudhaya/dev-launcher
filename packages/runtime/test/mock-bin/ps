@@ -1,0 +1,5 @@
+#!/bin/sh
+# Mock ps -p PID -o comm=. Always answers with the controllable process name.
+set -eu
+cat "${MOCK_STATE_DIR}/process-name" 2>/dev/null || printf 'mockproc\n'
+exit 0

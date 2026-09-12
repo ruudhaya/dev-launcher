@@ -1,0 +1,11 @@
+#!/bin/sh
+# Mock nc. Mirrors the same "listening-port" state file lsof uses, so a test
+# can make both the lsof check and the port-poll ready-check agree.
+set -eu
+
+port=""
+for a in "$@"; do port="${a}"; done
+
+state_port=$(cat "${MOCK_STATE_DIR}/listening-port" 2>/dev/null || printf '')
+[ -n "${port}" ] && [ "${port}" = "${state_port}" ] && exit 0
+exit 1
