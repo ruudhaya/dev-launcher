@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import type { ResolvedLauncherConfig } from '../config/index.js';
-import type { PackageManager } from '../detect/index.js';
+import type { NodeVersionInfo, PackageManager } from '../detect/index.js';
 import { DevlaunchError } from '../errors/index.js';
 import type { BundleFile } from '../platform/index.js';
 import { generateLauncherEnv } from './launcher-env.js';
@@ -12,11 +12,14 @@ export interface BundlePlanInputs {
   readonly config: ResolvedLauncherConfig;
   readonly projectDir: string;
   readonly packageManager: PackageManager;
+  readonly nodeVersion: NodeVersionInfo | undefined;
   readonly devlaunchVersion: string;
   /** Info.plist template text (with __TOKEN__ placeholders), from @devlaunch/runtime. */
   readonly infoPlistTemplate: string;
   /** MacOS/launcher script template text, from @devlaunch/runtime. */
   readonly launcherScriptTemplate: string;
+  /** strings.sh template text (error-catalog strings for launcher.sh), from @devlaunch/runtime. */
+  readonly stringsTemplate: string;
   /** The vendored CLI's built JS, embedded so the launcher can build reports offline. */
   readonly vendoredCli: string;
   /** Resources/icon.icns bytes — see src/icon for how these are produced. */
@@ -98,6 +101,7 @@ export function planBundle(inputs: BundlePlanInputs, options: PlanBundleOptions)
   const launcherEnv = generateLauncherEnv({
     projectDir: inputs.projectDir,
     name,
+    slug,
     script: inputs.config.script,
     port: inputs.config.port,
     mode: inputs.config.mode,
@@ -105,6 +109,7 @@ export function planBundle(inputs: BundlePlanInputs, options: PlanBundleOptions)
     browser: inputs.config.browser,
     readyTimeoutSeconds: inputs.config.readyTimeoutSeconds,
     packageManager: inputs.packageManager,
+    nodeVersion: inputs.nodeVersion,
     devlaunchVersion: inputs.devlaunchVersion,
   });
 
@@ -112,6 +117,7 @@ export function planBundle(inputs: BundlePlanInputs, options: PlanBundleOptions)
     { relativePath: 'Contents/Info.plist', content: infoPlist },
     { relativePath: 'Contents/MacOS/launcher', content: launcherScript, executable: true },
     { relativePath: 'Contents/Resources/launcher.env', content: launcherEnv },
+    { relativePath: 'Contents/Resources/strings.sh', content: inputs.stringsTemplate },
     { relativePath: 'Contents/Resources/devlaunch.mjs', content: inputs.vendoredCli },
     { relativePath: 'Contents/Resources/icon.icns', content: inputs.icon },
   ];

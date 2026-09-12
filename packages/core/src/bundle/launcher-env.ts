@@ -1,9 +1,11 @@
 import type { LauncherMode } from '../config/index.js';
-import type { PackageManager } from '../detect/index.js';
+import type { NodeVersionInfo, PackageManager } from '../detect/index.js';
 
 export interface LauncherEnvInputs {
   readonly projectDir: string;
   readonly name: string;
+  /** Filesystem-safe identifier for PID/log/lockhash file names — see slugify(). */
+  readonly slug: string;
   readonly script: string | undefined;
   readonly port: number | undefined;
   readonly mode: LauncherMode;
@@ -11,6 +13,7 @@ export interface LauncherEnvInputs {
   readonly browser: string | undefined;
   readonly readyTimeoutSeconds: number;
   readonly packageManager: PackageManager;
+  readonly nodeVersion: NodeVersionInfo | undefined;
   readonly devlaunchVersion: string;
 }
 
@@ -33,6 +36,7 @@ export function generateLauncherEnv(inputs: LauncherEnvInputs): string {
   const lines = [
     envLine('DEVLAUNCH_PROJECT_DIR', inputs.projectDir),
     envLine('DEVLAUNCH_NAME', inputs.name),
+    envLine('DEVLAUNCH_SLUG', inputs.slug),
     envLine('DEVLAUNCH_SCRIPT', inputs.script),
     envLine('DEVLAUNCH_PORT', inputs.port),
     envLine('DEVLAUNCH_MODE', inputs.mode),
@@ -40,6 +44,8 @@ export function generateLauncherEnv(inputs: LauncherEnvInputs): string {
     envLine('DEVLAUNCH_BROWSER', inputs.browser),
     envLine('DEVLAUNCH_READY_TIMEOUT_SECONDS', inputs.readyTimeoutSeconds),
     envLine('DEVLAUNCH_PACKAGE_MANAGER', inputs.packageManager),
+    envLine('DEVLAUNCH_NODE_VERSION', inputs.nodeVersion?.version),
+    envLine('DEVLAUNCH_NODE_VERSION_SOURCE', inputs.nodeVersion?.source),
     envLine('DEVLAUNCH_VERSION', inputs.devlaunchVersion),
   ].filter((line): line is string => line !== undefined);
 

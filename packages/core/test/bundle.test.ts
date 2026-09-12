@@ -150,6 +150,7 @@ describe('generateLauncherEnv', () => {
     const env = generateLauncherEnv({
       projectDir: '/Users/me/my-app',
       name: 'My App',
+      slug: 'my-app',
       script: 'dev',
       port: 5173,
       mode: 'terminal',
@@ -157,12 +158,16 @@ describe('generateLauncherEnv', () => {
       browser: 'com.google.Chrome',
       readyTimeoutSeconds: 90,
       packageManager: 'npm',
+      nodeVersion: { version: '20', source: 'nvmrc' },
       devlaunchVersion: '0.0.0',
     });
     expect(env).toContain('DEVLAUNCH_PROJECT_DIR="/Users/me/my-app"');
     expect(env).toContain('DEVLAUNCH_NAME="My App"');
+    expect(env).toContain('DEVLAUNCH_SLUG="my-app"');
     expect(env).toContain('DEVLAUNCH_PORT="5173"');
     expect(env).toContain('DEVLAUNCH_BROWSER="com.google.Chrome"');
+    expect(env).toContain('DEVLAUNCH_NODE_VERSION="20"');
+    expect(env).toContain('DEVLAUNCH_NODE_VERSION_SOURCE="nvmrc"');
     expect(env.endsWith('\n')).toBe(true);
   });
 
@@ -170,6 +175,7 @@ describe('generateLauncherEnv', () => {
     const env = generateLauncherEnv({
       projectDir: '/x',
       name: 'x',
+      slug: 'x',
       script: undefined,
       port: undefined,
       mode: 'headless',
@@ -177,17 +183,20 @@ describe('generateLauncherEnv', () => {
       browser: undefined,
       readyTimeoutSeconds: 90,
       packageManager: 'npm',
+      nodeVersion: undefined,
       devlaunchVersion: '0.0.0',
     });
     expect(env).not.toContain('DEVLAUNCH_SCRIPT');
     expect(env).not.toContain('DEVLAUNCH_PORT');
     expect(env).not.toContain('DEVLAUNCH_BROWSER');
+    expect(env).not.toContain('DEVLAUNCH_NODE_VERSION');
   });
 
   it('escapes double quotes in values', () => {
     const env = generateLauncherEnv({
       projectDir: '/x',
       name: 'Say "Hi"',
+      slug: 'say-hi',
       script: undefined,
       port: undefined,
       mode: 'terminal',
@@ -195,6 +204,7 @@ describe('generateLauncherEnv', () => {
       browser: undefined,
       readyTimeoutSeconds: 90,
       packageManager: 'npm',
+      nodeVersion: undefined,
       devlaunchVersion: '0.0.0',
     });
     expect(env).toContain('DEVLAUNCH_NAME="Say \\"Hi\\""');
@@ -206,11 +216,13 @@ describe('planBundle', () => {
     config: fakeConfig(),
     projectDir: '/Users/me/my-app',
     packageManager: 'npm' as const,
+    nodeVersion: { version: '20', source: 'nvmrc' as const },
     devlaunchVersion: '0.0.0',
     infoPlistTemplate:
       '__PROJECT_NAME__ / __PROJECT_SLUG__ / __DEVLAUNCH_VERSION__ / ' +
       '<key>LSUIElement</key>\n<true/>',
     launcherScriptTemplate: '#!/bin/sh\necho placeholder\n',
+    stringsTemplate: '# strings\nDEVLAUNCH_ERROR_PORT_IN_USE_TITLE="x"\n',
     vendoredCli: '// vendored cli\n',
     icon: new Uint8Array([1, 2, 3]),
   };
@@ -301,7 +313,7 @@ describe('planBundle', () => {
     );
   });
 
-  it('produces exactly the five expected files, with only the launcher executable', () => {
+  it('produces exactly the six expected files, with only the launcher executable', () => {
     const plan = planBundle(baseInputs, { bundleLocation: '/Applications', registry: {} });
     expect(plan.files.map((f) => f.relativePath).sort()).toEqual(
       [
@@ -310,6 +322,7 @@ describe('planBundle', () => {
         'Contents/Resources/devlaunch.mjs',
         'Contents/Resources/icon.icns',
         'Contents/Resources/launcher.env',
+        'Contents/Resources/strings.sh',
       ].sort(),
     );
     for (const file of plan.files) {
