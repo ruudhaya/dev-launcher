@@ -13,6 +13,18 @@ export async function readRegistry(adapter: PlatformAdapter): Promise<BundleRegi
   return parseRegistry(await adapter.readTextFile(registryPath(adapter)));
 }
 
+/**
+ * Persist the registry as-is — for callers (the CLI's `uninstall`) that
+ * remove an entry directly with removeRegistryEntry rather than going
+ * through writeBundle's upsert.
+ */
+export async function writeRegistry(
+  adapter: PlatformAdapter,
+  registry: BundleRegistry,
+): Promise<void> {
+  await adapter.writeTextFile(registryPath(adapter), serializeRegistry(registry));
+}
+
 export interface WriteBundleInputs {
   readonly projectDir: string;
   readonly devlaunchVersion: string;

@@ -35,6 +35,7 @@ export {
   substitutePlaceholders,
   upsertRegistryEntry,
   writeBundle,
+  writeRegistry,
 } from './bundle/index.js';
 
 export type {

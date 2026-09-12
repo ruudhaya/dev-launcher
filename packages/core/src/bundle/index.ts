@@ -12,4 +12,4 @@ export {
 export { slugify } from './slug.js';
 export { setLsUiElementHeadless, substitutePlaceholders } from './template.js';
 export type { WriteBundleInputs } from './write.js';
-export { readRegistry, writeBundle } from './write.js';
+export { readRegistry, writeBundle, writeRegistry } from './write.js';

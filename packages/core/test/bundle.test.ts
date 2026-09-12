@@ -15,6 +15,7 @@ import {
   substitutePlaceholders,
   upsertRegistryEntry,
   writeBundle,
+  writeRegistry,
 } from '../src/bundle/index.js';
 import type { ResolvedLauncherConfig } from '../src/config/index.js';
 import { DevlaunchError } from '../src/errors/index.js';
@@ -482,5 +483,17 @@ describe('writeBundle / readRegistry', () => {
 
     const registry = await readRegistry(adapter);
     expect(Object.keys(registry).sort()).toEqual(['App One', 'App Two']);
+  });
+
+  it('writeRegistry persists a registry built without going through writeBundle', async () => {
+    const { adapter, textFiles } = fakePlatformAdapter();
+    await writeBundle(plan, adapter, { projectDir: '/Users/me/my-app', devlaunchVersion: '0.0.0' });
+
+    const registry = await readRegistry(adapter);
+    const updated = removeRegistryEntry(registry, 'My App');
+    await writeRegistry(adapter, updated);
+
+    expect(await readRegistry(adapter)).toEqual({});
+    expect(textFiles.get('/fake/support/registry.json')).toContain('{}');
   });
 });
