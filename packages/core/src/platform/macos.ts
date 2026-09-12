@@ -1,6 +1,8 @@
-import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
+import { DevlaunchError } from '../errors/index.js';
+import { ICONSET_ENTRIES } from '../icon/iconset.js';
 import type { CommandRunner } from './command-runner.js';
 import { createSystemCommandRunner } from './command-runner.js';
 import type {
@@ -63,6 +65,50 @@ export function createMacosPlatformAdapter(
     async writeTextFile(path: string, content: string): Promise<void> {
       await mkdir(dirname(path), { recursive: true });
       await writeFile(path, content, 'utf8');
+    },
+
+    async convertPngToIcns(pngPath: string): Promise<Uint8Array> {
+      const workDir = await mkdtemp(join(tmpdir(), 'devlaunch-icon-'));
+      const iconsetDir = join(workDir, 'icon.iconset');
+      const icnsPath = join(workDir, 'icon.icns');
+      try {
+        await mkdir(iconsetDir, { recursive: true });
+
+        for (const { fileName, pixels } of ICONSET_ENTRIES) {
+          const result = await runCommand('sips', [
+            '-z',
+            String(pixels),
+            String(pixels),
+            pngPath,
+            '--out',
+            join(iconsetDir, fileName),
+          ]);
+          if (result.exitCode !== 0) {
+            throw new DevlaunchError(
+              'DEVLAUNCH_BUG',
+              `sips failed converting "${pngPath}" to ${fileName}: ${result.stderr.trim()}`,
+            );
+          }
+        }
+
+        const iconutilResult = await runCommand('iconutil', [
+          '-c',
+          'icns',
+          iconsetDir,
+          '-o',
+          icnsPath,
+        ]);
+        if (iconutilResult.exitCode !== 0) {
+          throw new DevlaunchError(
+            'DEVLAUNCH_BUG',
+            `iconutil failed converting "${pngPath}": ${iconutilResult.stderr.trim()}`,
+          );
+        }
+
+        return new Uint8Array(await readFile(icnsPath));
+      } finally {
+        await rm(workDir, { recursive: true, force: true });
+      }
     },
 
     async registerWithSpotlight(bundlePath: string): Promise<void> {

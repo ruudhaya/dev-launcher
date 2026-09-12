@@ -4,7 +4,7 @@
   "private": true,
   "description": "Launcher templates copied into generated macOS .app bundles: shell entrypoint, Info.plist, .command wrapper.",
   "license": "MIT",
-  "files": ["templates"],
+  "files": ["templates", "assets"],
   "scripts": {
     "lint:shell": "shellcheck templates/launcher.sh templates/run.command",
     "test:shell": "bats test"

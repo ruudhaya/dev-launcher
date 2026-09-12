@@ -95,6 +95,8 @@ export {
   getErrorEntry,
   listErrorEntries,
 } from './errors/index.js';
+export type { IconsetEntry, ResolveIconInputs } from './icon/index.js';
+export { ICONSET_ENTRIES, resolveIcon } from './icon/index.js';
 export type {
   BundleFile,
   CommandResult,
@@ -113,6 +115,7 @@ export {
   createSystemCommandRunner,
   createUnsupportedPlatformAdapter,
 } from './platform/index.js';
+
 export type { SecretPattern } from './redact/index.js';
 export {
   collectSecretValues,

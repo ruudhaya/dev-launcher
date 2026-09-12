@@ -26,6 +26,7 @@ export function createUnsupportedPlatformAdapter(): PlatformAdapter {
     isIndexedBySpotlight: async () => unsupported(),
     readTextFile: async () => unsupported(),
     writeTextFile: async () => unsupported(),
+    convertPngToIcns: async () => unsupported(),
     showDialog: async () => unsupported(),
     showNotification: async () => unsupported(),
     openUrl: async () => unsupported(),

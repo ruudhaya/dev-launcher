@@ -55,6 +55,9 @@ export interface PlatformAdapter {
   readTextFile(path: string): Promise<string | undefined>;
   writeTextFile(path: string, content: string): Promise<void>;
 
+  /** Converts a PNG (any size) at an absolute path into .icns bytes, via sips + iconutil. */
+  convertPngToIcns(pngPath: string): Promise<Uint8Array>;
+
   showDialog(options: DialogOptions): Promise<DialogResult>;
   showNotification(options: NotificationOptions): Promise<void>;
   openUrl(url: string): Promise<void>;

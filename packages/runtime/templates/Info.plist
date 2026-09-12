@@ -26,6 +26,10 @@
   <string>APPL</string>
   <key>CFBundleExecutable</key>
   <string>launcher</string>
+  <!-- No extension, per Apple's documented CFBundleIconFile convention — the
+       actual resource is Contents/Resources/icon.icns. -->
+  <key>CFBundleIconFile</key>
+  <string>icon</string>
   <key>LSMinimumSystemVersion</key>
   <string>12.0</string>
   <!--
