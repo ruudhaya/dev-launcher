@@ -94,7 +94,7 @@ pnpm --filter @devlaunch/runtime test:shell
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| M1: works on my Mac | L1-1 core engine, L1-2 launcher runtime, L1-3 CLI | Not started |
+| M1: works on my Mac | L1-1 core engine, L1-2 launcher runtime, L1-3 CLI | In progress — L1-1 done |
 | M2: team- and agent-ready | L1-4 team onboarding, L1-5 developer Agent Skill | Not started |
 | M3: a stranger can do it | L1-6 release, README, site | Not started |
 | M4: launch | L1-7 launch kit | Not started |
@@ -109,7 +109,7 @@ that file and into the current milestone.
 
 ## Status
 
-**Current prompt:** L1-0 (Realign the repo) — done.
+**Current prompt:** L1-1 (Core engine) — done.
 
 **Done:**
 - Prompt 1: monorepo scaffold (workspace, tooling, placeholder packages).
@@ -118,9 +118,50 @@ that file and into the current milestone.
   `docs/roadmap.md`, `docs/decisions/0001-two-launches.md`; added
   `examples/broken/` fixtures (missing-dependency, crash-on-start,
   wrong-port-config, node-version-mismatch) for error-path tests.
+- L1-1: built `packages/core` end to end, in 8 commits (one per sub-step):
+  - **Error catalog** (`src/errors`) — every code from the spec plus a few
+    more, generated shell strings / site docs / skill reference.
+  - **Redaction** (`src/redact`) — `.env`-value and pattern-based (sk-,
+    ghp_, AKIA, xox*-, JWT, Bearer, password=) redaction.
+  - **Detection** (`src/detect`) — package manager, dev script, 7
+    frameworks + generic fallback, Node version, monorepo workspace apps,
+    icon candidates, and a `RunConfigImporter` for `.claude/launch.json`
+    (format verified against Claude Code's live docs). New fixture:
+    `examples/with-claude-launch-json/`.
+  - **Config** (`src/config`) — layered resolution (defaults < package.json
+    `launcher` < `.devlaunch.local.json` < flags), monorepo arrays,
+    `processes`/`env` rejected with a clear message, JSON Schema exported
+    to `schemas/config.schema.json`.
+  - **Report builder** (`src/report`) — the `devlaunch report v1` text,
+    redacted, capped at ~12k chars, snapshot-tested per broken fixture.
+  - **Platform adapter** (`src/platform`) — bundle I/O, Spotlight,
+    dialogs/notifications via osascript, `open`, PNG→icns — the only part
+    of core that touches the real machine, behind a mockable command
+    runner; `unsupported` implementation for non-macOS.
+  - **Bundle plan** (`src/bundle`) — pure `planBundle()` (naming/collision
+    resolution, template substitution) then I/O `writeBundle()` (files +
+    registry + Spotlight registration via the platform adapter).
+  - **Icon conversion** (`src/icon`) — real sips/iconutil PNG→icns, with a
+    checked-in default icon (`packages/runtime/assets/default-icon.icns`)
+    for projects with no icon of their own.
+  - Along the way: fixed two real bugs the tests caught (a tsup dts-bundler
+    issue with composite TS projects, and a bare `__TOKEN__` used as a
+    plist boolean tag that broke `plutil -lint` on the raw runtime
+    template) and closed a gap (Info.plist never referenced its icon —
+    added `CFBundleIconFile`).
+  - 169 tests in `packages/core`, all passing; typecheck/lint/build clean
+    workspace-wide after every commit.
 
-**Next:** L1-1 — build `packages/core`: error catalog, redaction, detection
-(including the `.claude/launch.json` importer), config resolution, report
-builder, platform adapter, bundle plan.
+**Next:** L1-2 — `packages/runtime`'s launcher.sh gets its real logic (it's
+still a placeholder): login shell + Node version activation, single-instance
+PID handling, dependency install, port-in-use handling, terminal/headless
+start, ready detection, and the Copy Report flow — driven by the
+`Resources/launcher.env` and `strings.sh` that `packages/core` already
+generates.
 
-**Open questions:** none yet.
+**Open questions:**
+- The vendored CLI (`Resources/devlaunch.mjs`) and the runtime template text
+  are passed into `planBundle`/`writeBundle` as plain strings rather than
+  read from disk by core (core stays dependency- and fs-write-free outside
+  `src/platform`) — confirm this is still the right seam once L1-3's CLI is
+  the one assembling those inputs for real.
