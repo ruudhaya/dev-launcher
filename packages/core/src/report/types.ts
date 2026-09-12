@@ -11,7 +11,13 @@ export interface ReportEnvironment {
 export interface ReportInput {
   /** One-line, human summary of what happened. */
   readonly summary: string;
-  readonly errorCode: import('../errors/index.js').DevlaunchErrorCode;
+  /**
+   * Omitted when the report isn't about a failure at all — e.g. a person or
+   * agent running `devlaunch report` on a healthy launcher just to get a
+   * diagnostic snapshot. When present, the report includes the catalog's
+   * title and agentHint for it.
+   */
+  readonly errorCode?: import('../errors/index.js').DevlaunchErrorCode;
   /** What devlaunch tried, in order — shown as a numbered list. */
   readonly stepsAttempted: readonly string[];
   readonly environment: ReportEnvironment;

@@ -229,6 +229,22 @@ export const ERROR_CATALOG: Readonly<Record<DevlaunchErrorCode, ErrorCatalogEntr
       'The RunConfigImporter for .claude/launch.json could not parse the file as the ' +
       'documented shape (see the doc-link comment in src/detect/importers/claude-launch-json.ts).',
   },
+  LAUNCHER_NOT_FOUND: {
+    code: 'LAUNCHER_NOT_FOUND',
+    category: 'user-action',
+    title: "Can't find a launcher with that name",
+    explanation:
+      "devlaunch doesn't have a launcher registered with this name. Check the spelling, or " +
+      'see what is registered.',
+    actions: ['View List', 'Cancel'],
+    agentHint:
+      'Run `devlaunch list --json` to see the exact registered names, then retry with the ' +
+      "correct one. If run from inside the project's own directory, omitting the name also " +
+      'works — devlaunch matches it by project path.',
+    developerDetail:
+      'No entry for this name in the bundle registry at ' +
+      '~/Library/Application Support/devlaunch/registry.json.',
+  },
   DEVLAUNCH_BUG: {
     code: 'DEVLAUNCH_BUG',
     category: 'devlaunch-bug',

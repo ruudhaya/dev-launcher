@@ -69,6 +69,14 @@ describe('buildReport — shape', () => {
     );
     expect(report).toContain('- Node: not found');
   });
+
+  it('omits the Error section entirely when no errorCode is given', () => {
+    const { errorCode: _errorCode, ...rest } = baseInput();
+    const report = buildReport({ ...rest, summary: 'Status snapshot for "my-app".' });
+    expect(report).not.toContain('Error:');
+    expect(report).not.toContain('For coding agents:');
+    expect(report).toContain('Status snapshot for "my-app".');
+  });
 });
 
 describe('buildReport — redaction', () => {

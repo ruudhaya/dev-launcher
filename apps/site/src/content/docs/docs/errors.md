@@ -73,6 +73,27 @@ Run `devlaunch report --clipboard` and file it as a GitHub issue on the devlaunc
 
 An unexpected internal error — not one of the other catalog codes.
 
+## LAUNCHER_NOT_FOUND
+
+**Category:** user-action
+
+**Can't find a launcher with that name**
+
+devlaunch doesn't have a launcher registered with this name. Check the spelling, or see what is registered.
+
+**Dialog actions:**
+
+- View List
+- Cancel
+
+**For coding agents:**
+
+Run `devlaunch list --json` to see the exact registered names, then retry with the correct one. If run from inside the project's own directory, omitting the name also works — devlaunch matches it by project path.
+
+**Developer detail:**
+
+No entry for this name in the bundle registry at ~/Library/Application Support/devlaunch/registry.json.
+
 ## NAME_COLLISION
 
 **Category:** user-action

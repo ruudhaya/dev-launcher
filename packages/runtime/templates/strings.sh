@@ -20,6 +20,12 @@ DEVLAUNCH_ERROR_DEVLAUNCH_BUG_EXPLANATION="This isn't a problem with your projec
 DEVLAUNCH_ERROR_DEVLAUNCH_BUG_ACTIONS="Copy Report|Cancel"
 DEVLAUNCH_ERROR_DEVLAUNCH_BUG_AGENT_HINT="Run \`devlaunch report --clipboard\` and file it as a GitHub issue on the devlaunch repo with the redacted report attached. Do not attempt to work around it by editing generated files by hand — they're overwritten on the next \`init\`."
 
+# LAUNCHER_NOT_FOUND (user-action)
+DEVLAUNCH_ERROR_LAUNCHER_NOT_FOUND_TITLE="Can't find a launcher with that name"
+DEVLAUNCH_ERROR_LAUNCHER_NOT_FOUND_EXPLANATION="devlaunch doesn't have a launcher registered with this name. Check the spelling, or see what is registered."
+DEVLAUNCH_ERROR_LAUNCHER_NOT_FOUND_ACTIONS="View List|Cancel"
+DEVLAUNCH_ERROR_LAUNCHER_NOT_FOUND_AGENT_HINT="Run \`devlaunch list --json\` to see the exact registered names, then retry with the correct one. If run from inside the project's own directory, omitting the name also works — devlaunch matches it by project path."
+
 # NAME_COLLISION (user-action)
 DEVLAUNCH_ERROR_NAME_COLLISION_TITLE="Another launcher already uses this name"
 DEVLAUNCH_ERROR_NAME_COLLISION_EXPLANATION="A different devlaunch app already exists with this name, so this project needs a different one."

@@ -41,8 +41,12 @@ function formatSteps(steps: readonly string[]): string {
  * and practical to paste into an agent's chat or a GitHub issue.
  */
 export function buildReport(input: ReportInput): string {
-  const entry = getErrorEntry(input.errorCode);
+  const entry = input.errorCode ? getErrorEntry(input.errorCode) : undefined;
   const secretValues = input.secretValues ?? [];
+
+  const errorLines = entry
+    ? [`Error: ${entry.code} — ${entry.title}`, `For coding agents: ${entry.agentHint}`, '']
+    : [];
 
   const head = redactText(
     [
@@ -50,9 +54,7 @@ export function buildReport(input: ReportInput): string {
       '',
       `Summary: ${input.summary}`,
       '',
-      `Error: ${entry.code} — ${entry.title}`,
-      `For coding agents: ${entry.agentHint}`,
-      '',
+      ...errorLines,
       'Steps attempted:',
       formatSteps(input.stepsAttempted),
       '',

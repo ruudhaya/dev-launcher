@@ -19,6 +19,7 @@ export type DevlaunchErrorCode =
   | 'NO_PACKAGE_JSON'
   | 'NO_DEV_SCRIPT'
   | 'RUN_CONFIG_INVALID'
+  | 'LAUNCHER_NOT_FOUND'
   | 'DEVLAUNCH_BUG';
 
 /**
