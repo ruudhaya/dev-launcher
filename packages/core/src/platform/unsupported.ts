@@ -24,6 +24,8 @@ export function createUnsupportedPlatformAdapter(): PlatformAdapter {
     writeBundle: async () => unsupported(),
     registerWithSpotlight: async () => unsupported(),
     isIndexedBySpotlight: async () => unsupported(),
+    readTextFile: async () => unsupported(),
+    writeTextFile: async () => unsupported(),
     showDialog: async () => unsupported(),
     showNotification: async () => unsupported(),
     openUrl: async () => unsupported(),

@@ -1,7 +1,8 @@
 /** One file to write inside a generated .app bundle, path relative to the bundle root. */
 export interface BundleFile {
   readonly relativePath: string;
-  readonly content: string;
+  /** Text for scripts/plists/env files; bytes for the icon. */
+  readonly content: string | Uint8Array;
   /** Set on the launcher's own executable (chmod +x). */
   readonly executable?: boolean;
 }
@@ -49,6 +50,10 @@ export interface PlatformAdapter {
   writeBundle(options: WriteBundleOptions): Promise<void>;
   registerWithSpotlight(bundlePath: string): Promise<void>;
   isIndexedBySpotlight(bundlePath: string): Promise<boolean>;
+
+  /** Small persisted text files — the bundle registry today, PID files later. Undefined if missing. */
+  readTextFile(path: string): Promise<string | undefined>;
+  writeTextFile(path: string, content: string): Promise<void>;
 
   showDialog(options: DialogOptions): Promise<DialogResult>;
   showNotification(options: NotificationOptions): Promise<void>;

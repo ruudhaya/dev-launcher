@@ -15,6 +15,29 @@
 export const CORE_VERSION = '0.0.0';
 
 export type {
+  BundlePlan,
+  BundlePlanInputs,
+  BundleRegistry,
+  BundleRegistryEntry,
+  LauncherEnvInputs,
+  PlanBundleOptions,
+  WriteBundleInputs,
+} from './bundle/index.js';
+export {
+  generateLauncherEnv,
+  parseRegistry,
+  planBundle,
+  readRegistry,
+  removeRegistryEntry,
+  serializeRegistry,
+  setLsUiElementHeadless,
+  slugify,
+  substitutePlaceholders,
+  upsertRegistryEntry,
+  writeBundle,
+} from './bundle/index.js';
+
+export type {
   LauncherConfigFields,
   LauncherMode,
   RawLauncherConfig,

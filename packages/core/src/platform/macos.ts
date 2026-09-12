@@ -1,4 +1,4 @@
-import { chmod, mkdir, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import type { CommandRunner } from './command-runner.js';
@@ -47,6 +47,22 @@ export function createMacosPlatformAdapter(
           await chmod(fullPath, 0o755);
         }
       }
+    },
+
+    async readTextFile(path: string): Promise<string | undefined> {
+      try {
+        return await readFile(path, 'utf8');
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+          return undefined;
+        }
+        throw error;
+      }
+    },
+
+    async writeTextFile(path: string, content: string): Promise<void> {
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(path, content, 'utf8');
     },
 
     async registerWithSpotlight(bundlePath: string): Promise<void> {

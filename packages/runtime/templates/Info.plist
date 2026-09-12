@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  devlaunch Info.plist — PLACEHOLDER
+  devlaunch Info.plist template.
 
-  @devlaunch/core fills the __PLACEHOLDER__ tokens per project at generate time.
-  Kept minimal but valid so plist parsers and future template tests have something
-  real to check.
+  @devlaunch/core (see src/bundle) fills in the tokens below per project at
+  generate time via a plain substitutePlaceholders() text replacement — no
+  templating engine, so every token must appear literally as TOKEN_NAME
+  wrapped in double underscores. CFBundleExecutable, CFBundleVersion, and
+  CFBundleShortVersionString are static; the shell script this bundle points
+  at (Contents/MacOS/launcher) is still a placeholder until a later change.
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -25,8 +28,19 @@
   <string>launcher</string>
   <key>LSMinimumSystemVersion</key>
   <string>12.0</string>
+  <!--
+    true for headless launchers (no Dock icon while the server runs), false for
+    terminal mode. Kept a real, valid boolean here, not a placeholder token, so
+    this file stays valid plist XML on its own; @devlaunch/core flips true/false
+    with a targeted string replace (see setLsUiElementHeadless in src/bundle)
+    rather than the generic substitution used for the string fields below.
+  -->
   <key>LSUIElement</key>
   <true/>
+  <!-- The devlaunch version that generated this bundle — read by `devlaunch upgrade` (later) to
+       tell whether a launcher needs regenerating. -->
+  <key>DevlaunchVersion</key>
+  <string>__DEVLAUNCH_VERSION__</string>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>

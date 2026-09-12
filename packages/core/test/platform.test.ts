@@ -88,6 +88,12 @@ describe('createUnsupportedPlatformAdapter', () => {
     await expect(adapter.revealInFinder('/x')).rejects.toMatchObject({
       code: 'PLATFORM_UNSUPPORTED',
     });
+    await expect(adapter.readTextFile('/x')).rejects.toMatchObject({
+      code: 'PLATFORM_UNSUPPORTED',
+    });
+    await expect(adapter.writeTextFile('/x', 'y')).rejects.toMatchObject({
+      code: 'PLATFORM_UNSUPPORTED',
+    });
   });
 });
 
@@ -130,6 +136,37 @@ describe('createMacosPlatformAdapter — writeBundle', () => {
     expect(readFileSync(join(bundlePath, 'Contents/Info.plist'), 'utf8')).toBe('<plist></plist>');
     const launcherStat = statSync(join(bundlePath, 'Contents/MacOS/launcher'));
     expect((launcherStat.mode & 0o111) !== 0).toBe(true); // executable bit set
+  });
+
+  it('writes binary content (e.g. an icon) as-is', async () => {
+    const bundlePath = join(tempDir(), 'My App.app');
+    const adapter = createMacosPlatformAdapter();
+    const iconBytes = new Uint8Array([0x69, 0x63, 0x6e, 0x73]);
+
+    await adapter.writeBundle({
+      bundlePath,
+      files: [{ relativePath: 'Contents/Resources/icon.icns', content: iconBytes }],
+    });
+
+    expect(new Uint8Array(readFileSync(join(bundlePath, 'Contents/Resources/icon.icns')))).toEqual(
+      iconBytes,
+    );
+  });
+});
+
+describe('createMacosPlatformAdapter — readTextFile / writeTextFile', () => {
+  it('returns undefined for a file that does not exist', async () => {
+    const adapter = createMacosPlatformAdapter();
+    expect(await adapter.readTextFile(join(tempDir(), 'nope.json'))).toBeUndefined();
+  });
+
+  it('writes a file (creating parent directories) and reads it back', async () => {
+    const adapter = createMacosPlatformAdapter();
+    const path = join(tempDir(), 'nested', 'registry.json');
+
+    await adapter.writeTextFile(path, '{"hello":"world"}');
+
+    expect(await adapter.readTextFile(path)).toBe('{"hello":"world"}');
   });
 });
 
