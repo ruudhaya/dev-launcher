@@ -45,7 +45,7 @@ published to npm.
 pnpm install                 # install workspace deps (packages/*, apps/*; not examples/*)
 pnpm build                   # turbo run build — core + cli emit dist/, site builds
 pnpm test                    # turbo run test — Vitest unit tests (core, cli)
-pnpm test:e2e                # turbo run test:e2e — macOS end-to-end (placeholder for now)
+pnpm test:e2e                # turbo run test:e2e — macOS end-to-end, drives the built CLI binary
 pnpm lint                    # turbo run lint — Biome check
 pnpm typecheck               # turbo run typecheck — tsc --noEmit, strict
 pnpm format                  # biome format --write .
@@ -101,7 +101,7 @@ pnpm build && pnpm smoke:macos
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| M1: works on my Mac | L1-1 core engine, L1-2 launcher runtime, L1-3 CLI | In progress — L1-1, L1-2 done |
+| M1: works on my Mac | L1-1 core engine, L1-2 launcher runtime, L1-3 CLI | In progress — L1-1, L1-2 done; L1-3 built and tested, dogfooding pending |
 | M2: team- and agent-ready | L1-4 team onboarding, L1-5 developer Agent Skill | Not started |
 | M3: a stranger can do it | L1-6 release, README, site | Not started |
 | M4: launch | L1-7 launch kit | Not started |
@@ -116,7 +116,8 @@ that file and into the current milestone.
 
 ## Status
 
-**Current prompt:** L1-2 (Launcher runtime) — done.
+**Current prompt:** L1-3 (CLI) — built and tested; real dogfooding still pending
+(see Next).
 
 **Done:**
 - Prompt 1: monorepo scaffold (workspace, tooling, placeholder packages).
@@ -197,20 +198,71 @@ that file and into the current milestone.
     isn't reliably its own process-group leader, which could leave a dev
     command's supervised child (e.g. `vite`, spawned by `npm`) running
     after Stop — replaced with a real recursive process-tree kill.
+- L1-3: built `packages/cli` — the published `devlaunch` binary — in 4
+  commits:
+  - **Foundations:** `docs/agent-contract.md` (the full `--json` envelope,
+    exit-code table, non-interactive rules) written first, with
+    `schemas/envelope.schema.json` as its machine-checkable twin; a
+    dependency-free argv parser (no yargs/commander — the published CLI is
+    one file with zero runtime deps); `CliContext` built once per
+    invocation; a real recursive `killTree` (same reasoning as
+    `launcher.sh`'s own); `generate-runtime-assets.mjs` embeds
+    `packages/runtime`'s templates/icon as string/base64 constants at
+    build time (gitignored, regenerated every build) since the shipped CLI
+    can't read `@devlaunch/runtime` off disk.
+  - **`init`** `[--cwd] [--yes] [--dry-run] [--name] [--mode]`: the first
+    thing that actually ties detection + config + the bundle plan + the
+    platform adapter together for a real user (`scripts/lib/
+    generate-bundle.mjs` was the smoke-test stand-in for this until now).
+    Self-vendors the running CLI into `Resources/devlaunch.mjs`. Fixed a
+    real bug caught while wiring it up: `resolveConfig` applies its
+    `flags` layer uniformly across every array entry, so passing `--name`
+    straight through as a flag (meant to *pick* one monorepo app) instead
+    stamped every app with the same name before filtering ever ran, and
+    silently generated a launcher per app; `--name` is now a pure CLI-side
+    filter, never passed into `resolveConfig`.
+  - **`open` / `status` / `list` / `stop` / `logs` / `report` / `doctor` /
+    `uninstall`:** the rest of the documented contract. `report` serves
+    both the interactive form and the vendored copy's internal
+    `--code/--project-dir/--log-file` invocation from `launcher.sh`'s
+    Copy Report. `doctor` runs 8 checks (macOS version, Node under the
+    login shell vs. devlaunch's own, the current project's requested Node
+    version, Spotlight indexing, config validity, port availability
+    cross-checked against this project's own launcher, stale launchers,
+    stale PID files), each with a code where the catalog has one and a
+    hint always. Caught and fixed a real bug here too: `devlaunch
+    --version` with no subcommand was swallowed by the "no command" help
+    branch — a looser existing test (`toHaveBeenCalled()`, not asserting
+    *what* was printed) had let it slip through green.
+  - **Tests:** 45 unit tests (every command against a `PlatformAdapter`
+    with real fs I/O rooted under a temp dir, every `--json` envelope
+    validated against `schemas/envelope.schema.json` via ajv) plus a real
+    end-to-end suite driving the actual built `dist/index.js` binary
+    (`HOME` overridden to a temp dir) through `init` → `list`/`status` →
+    `uninstall` on a real fixture, every `examples/broken/*` fixture
+    (init succeeds — they only fail at dev-server runtime), and the
+    LAUNCHER_NOT_FOUND/NO_PACKAGE_JSON error paths — replaces the
+    prompt-1 placeholder in the macOS e2e CI job.
+  - Along the way, two small `packages/core` additions this needed:
+    `LAUNCHER_NOT_FOUND` (the catalog had no code for "no such name in the
+    registry") and `writeRegistry` (so `uninstall` can persist a registry
+    it edited directly, without knowing `registry.json`'s path itself);
+    and `buildReport`'s `errorCode` became optional, since `devlaunch
+    report` on a healthy launcher isn't reporting a failure.
 
-**Next:** L1-3 — the `devlaunch` CLI itself (`init`, `open`, `status`,
-`list`, `stop`, `logs`, `report`, `doctor`, `uninstall`): the first thing
-that actually ties detection + config + the bundle plan + the platform
-adapter together for a real user, since today that orchestration only
-exists in `scripts/lib/generate-bundle.mjs` as a smoke-test stand-in.
+**Next:** finish L1-3's "Done when": `devlaunch init` used on three real
+projects outside `examples/`, opened for real from Spotlight (⌘Space →
+type the name) — genuine dogfooding, not fixture tests. This is the one
+remaining piece before M1 is complete; it touches the real machine's
+`~/Applications` and registry, so it's a deliberate, one-at-a-time action
+rather than something to script. Once done, M1 is complete and L1-4 (team
+onboarding) is next.
 
 **Open questions:**
-- `scripts/lib/generate-bundle.mjs`'s orchestration (detect → resolve
-  config → compute the run command → plan → write) is exactly what L1-3's
-  `init` command needs to do for real — worth treating as a rough draft
-  for that command rather than writing it from scratch, though it'll need
-  prompts, `--dry-run`, `--json`, and the exit-code contract L1-3 asks for.
-- The vendored CLI (`Resources/devlaunch.mjs`) is still a placeholder
-  string (`generate-bundle.mjs` embeds a comment saying so) — Copy Report's
-  "run the vendored CLI" path has never been exercised for real, only its
-  shell-only fallback. That only becomes testable once L1-3 exists.
+- None carried over from L1-3 — the vendored CLI question from L1-2 is
+  resolved: `Resources/devlaunch.mjs` is now the real, running CLI
+  (self-vendored by `init`), and `report`'s vendored-form flags
+  (`--code`/`--project-dir`/`--log-file`) are exercised by the CLI's own
+  test suite, though not yet by a real launcher's real Copy Report click
+  (that needs a real crash, which the dogfooding step above may or may not
+  produce).
