@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://devlaunch.dev/schemas/envelope.schema.json",
+  "title": "devlaunch CLI --json envelope",
+  "description": "The shape of every devlaunch command's --json output. See docs/agent-contract.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "ok", "code", "message", "hint", "data"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "Bumped only on a breaking change to this shape."
+    },
+    "ok": {
+      "type": "boolean",
+      "description": "Whether the command succeeded."
+    },
+    "code": {
+      "type": "string",
+      "description": "\"OK\" on success. On failure, a stable error-catalog code (e.g. PORT_IN_USE)."
+    },
+    "message": {
+      "type": "string",
+      "description": "One human-readable sentence, safe to print as-is."
+    },
+    "hint": {
+      "type": ["string", "null"],
+      "description": "What to do next. On failure, the catalog entry's agentHint."
+    },
+    "data": {
+      "type": ["object", "null"],
+      "description": "Command-specific payload. Never contains secret values."
+    }
+  }
+}

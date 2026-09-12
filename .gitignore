@@ -31,3 +31,6 @@ coverage/
 
 # generated macOS bundles (local dev output)
 *.app/
+
+# codegen: embedded runtime templates/assets, regenerated on every cli build
+packages/cli/src/generated/
