@@ -48,6 +48,26 @@ TEMPLATES="${BATS_TEST_DIRNAME}/../templates"
   grep -q '\[http://localhost:4599/\]' <(open_calls)
 }
 
+@test "terminal mode: builds a wrapper script and tells Terminal to run it" {
+  # The mock osascript only records the "tell application Terminal" call —
+  # it doesn't actually run Terminal.app, so the wrapper never really
+  # executes here and this ends in READY_TIMEOUT. That's fine: this test is
+  # about the wrapper being built correctly and Terminal being asked to run
+  # it, which is everything launcher.sh itself is responsible for.
+  setup_bundle 'DEVLAUNCH_MODE="terminal"'
+  echo "Cancel" >"${MOCK_STATE_DIR}/dialog-button"
+  run_launcher
+  [ "$status" -eq 0 ]
+
+  local wrapper="${FAKE_HOME}/Library/Application Support/devlaunch/run/test-app.terminal-cmd.sh"
+  [ -x "${wrapper}" ]
+  grep -q 'npm run dev' "${wrapper}"
+  grep -q "trap 'rm -f" "${wrapper}"
+
+  grep -q 'tell application "Terminal" to do script' <(dialog_calls)
+  grep -q "${wrapper}" <(dialog_calls)
+}
+
 @test "does not reinstall dependencies when node_modules already exists" {
   setup_bundle
   write_ready_server
