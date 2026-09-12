@@ -173,13 +173,30 @@ check_project_dir() {
 # ---------------------------------------------------------------------------
 # 3. Single instance via PID file. Clean stale PID files.
 # ---------------------------------------------------------------------------
+# Recursively signals PID and everything it spawned. A plain process-group
+# kill (`kill -SIG -- "-$pid"`) would be simpler, but a background job in a
+# non-interactive shell isn't reliably its own process group leader without
+# job control (`setopt MONITOR`), which would also detach it from this
+# script's own signal handling — so a dev command like "npm run dev" (which
+# stays alive supervising a "vite"/"next" child rather than exec-replacing
+# itself) can leave that child orphaned and still holding the port after a
+# plain kill of just the top PID. Walking the real process tree via `pgrep
+# -P` works regardless of process-group setup.
+kill_tree() {
+  local pid=$1 sig=$2
+  local child
+  for child in $(pgrep -P "${pid}" 2>/dev/null); do
+    kill_tree "${child}" "${sig}"
+  done
+  kill -"${sig}" "${pid}" 2>/dev/null || true
+}
+
 stop_pid() {
   local pid=$1
-  kill -TERM -- "-${pid}" 2>/dev/null || kill -TERM "${pid}" 2>/dev/null || true
+  kill_tree "${pid}" TERM
   sleep 1
-  if kill -0 "${pid}" 2>/dev/null; then
-    kill -KILL -- "-${pid}" 2>/dev/null || kill -KILL "${pid}" 2>/dev/null || true
-  fi
+  kill -0 "${pid}" 2>/dev/null && kill_tree "${pid}" KILL
+  true
 }
 
 clean_stale_pid() {
@@ -375,7 +392,13 @@ check_port() {
 # ---------------------------------------------------------------------------
 start_headless() {
   mkdir -p "${RUN_DIR}"
-  ( cd "${DEVLAUNCH_PROJECT_DIR}" && exec "${DEVLAUNCH_PACKAGE_MANAGER}" run "${DEVLAUNCH_SCRIPT}" ) >>"${LOG_FILE}" 2>&1 &
+  # DEVLAUNCH_COMMAND is a full command line ("npm run dev", or an imported
+  # .claude/launch.json command like "node server.js") — run through a
+  # sub-shell's own `exec` (not just eval) so SERVER_PID below ends up being
+  # that command's real PID, not an extra wrapper shell left sitting on top
+  # of it — the process-group kill in stop_pid needs that PID to actually be
+  # the group leader.
+  ( cd "${DEVLAUNCH_PROJECT_DIR}" && exec zsh -c "${DEVLAUNCH_COMMAND}" ) >>"${LOG_FILE}" 2>&1 &
   SERVER_PID=$!
   printf '%s' "${SERVER_PID}" >"${PID_FILE}"
   log "started headless (pid ${SERVER_PID})"
@@ -389,10 +412,7 @@ start_terminal() {
     printf 'cd %s || exit 1\n' "$(quote_shell "${DEVLAUNCH_PROJECT_DIR}")"
     printf 'echo $$ >%s\n' "$(quote_shell "${PID_FILE}")"
     printf 'trap '\''rm -f %s'\'' EXIT\n' "$(quote_shell "${PID_FILE}")"
-    printf '%s run %s 2>&1 | tee -a %s\n' \
-      "$(quote_shell "${DEVLAUNCH_PACKAGE_MANAGER}")" \
-      "$(quote_shell "${DEVLAUNCH_SCRIPT}")" \
-      "$(quote_shell "${LOG_FILE}")"
+    printf '%s 2>&1 | tee -a %s\n' "${DEVLAUNCH_COMMAND}" "$(quote_shell "${LOG_FILE}")"
   } >"${wrapper}"
   chmod +x "${wrapper}"
   osascript -e "tell application \"Terminal\" to do script $(quote_applescript "${wrapper}")" >/dev/null 2>&1 || true
@@ -400,14 +420,24 @@ start_terminal() {
 }
 
 # ---------------------------------------------------------------------------
-# 7. Ready detection: the ready-line regex (approximated here by a generic
+# 7. Ready detection: the ready-line regex (approximated here by a
 #    localhost-URL match, since every framework devlaunch detects prints
-#    one), falling back to polling the port.
+#    one) — for the *configured* port when there is one, so a project whose
+#    dev server actually listens somewhere else (misconfigured, or devlaunch
+#    guessed wrong) correctly times out instead of matching any URL in the
+#    log — falling back to polling the port directly.
 # ---------------------------------------------------------------------------
 wait_for_ready() {
   sleep 1 # give the process (or Terminal's wrapper) a moment to write its PID
   if [ -z "${SERVER_PID}" ] && [ -f "${PID_FILE}" ]; then
     SERVER_PID=$(cat "${PID_FILE}")
+  fi
+
+  local ready_pattern
+  if [ -n "${DEVLAUNCH_PORT:-}" ]; then
+    ready_pattern="https?://(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0):${DEVLAUNCH_PORT}\\b"
+  else
+    ready_pattern='https?://(localhost|127\.0\.0\.1|0\.0\.0\.0):[0-9]+'
   fi
 
   local deadline
@@ -420,7 +450,7 @@ wait_for_ready() {
       return 1
     fi
 
-    if [ -f "${LOG_FILE}" ] && grep -Eqi 'https?://(localhost|127\.0\.0\.1|0\.0\.0\.0):[0-9]+' "${LOG_FILE}"; then
+    if [ -f "${LOG_FILE}" ] && grep -Eqi "${ready_pattern}" "${LOG_FILE}"; then
       return 0
     fi
 

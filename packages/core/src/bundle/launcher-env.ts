@@ -6,7 +6,14 @@ export interface LauncherEnvInputs {
   readonly name: string;
   /** Filesystem-safe identifier for PID/log/lockhash file names — see slugify(). */
   readonly slug: string;
-  readonly script: string | undefined;
+  /**
+   * The full shell command that starts the dev server — e.g. "npm run dev",
+   * or an imported .claude/launch.json command like "node server.js". Not
+   * just a package.json script name: a project with no dev script of its
+   * own (only an imported run config) has no "<packageManager> run <name>"
+   * to reconstruct, so the caller resolves the actual command once, here.
+   */
+  readonly command: string;
   readonly port: number | undefined;
   readonly mode: LauncherMode;
   readonly openPath: string;
@@ -37,7 +44,7 @@ export function generateLauncherEnv(inputs: LauncherEnvInputs): string {
     envLine('DEVLAUNCH_PROJECT_DIR', inputs.projectDir),
     envLine('DEVLAUNCH_NAME', inputs.name),
     envLine('DEVLAUNCH_SLUG', inputs.slug),
-    envLine('DEVLAUNCH_SCRIPT', inputs.script),
+    envLine('DEVLAUNCH_COMMAND', inputs.command),
     envLine('DEVLAUNCH_PORT', inputs.port),
     envLine('DEVLAUNCH_MODE', inputs.mode),
     envLine('DEVLAUNCH_OPEN_PATH', inputs.openPath),

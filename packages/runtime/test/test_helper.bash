@@ -35,7 +35,7 @@ setup_bundle() {
     printf 'DEVLAUNCH_PROJECT_DIR="%s"\n' "${PROJECT_DIR}"
     printf 'DEVLAUNCH_NAME="Test App"\n'
     printf 'DEVLAUNCH_SLUG="test-app"\n'
-    printf 'DEVLAUNCH_SCRIPT="dev"\n'
+    printf 'DEVLAUNCH_COMMAND="npm run dev"\n'
     printf 'DEVLAUNCH_PORT="4599"\n'
     printf 'DEVLAUNCH_MODE="headless"\n'
     printf 'DEVLAUNCH_OPEN_PATH="/"\n'

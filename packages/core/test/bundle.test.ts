@@ -151,7 +151,7 @@ describe('generateLauncherEnv', () => {
       projectDir: '/Users/me/my-app',
       name: 'My App',
       slug: 'my-app',
-      script: 'dev',
+      command: 'npm run dev',
       port: 5173,
       mode: 'terminal',
       openPath: '/',
@@ -164,6 +164,7 @@ describe('generateLauncherEnv', () => {
     expect(env).toContain('DEVLAUNCH_PROJECT_DIR="/Users/me/my-app"');
     expect(env).toContain('DEVLAUNCH_NAME="My App"');
     expect(env).toContain('DEVLAUNCH_SLUG="my-app"');
+    expect(env).toContain('DEVLAUNCH_COMMAND="npm run dev"');
     expect(env).toContain('DEVLAUNCH_PORT="5173"');
     expect(env).toContain('DEVLAUNCH_BROWSER="com.google.Chrome"');
     expect(env).toContain('DEVLAUNCH_NODE_VERSION="20"');
@@ -176,7 +177,7 @@ describe('generateLauncherEnv', () => {
       projectDir: '/x',
       name: 'x',
       slug: 'x',
-      script: undefined,
+      command: 'node server.js',
       port: undefined,
       mode: 'headless',
       openPath: '/',
@@ -186,10 +187,28 @@ describe('generateLauncherEnv', () => {
       nodeVersion: undefined,
       devlaunchVersion: '0.0.0',
     });
-    expect(env).not.toContain('DEVLAUNCH_SCRIPT');
+    expect(env).toContain('DEVLAUNCH_COMMAND="node server.js"'); // required, not optional
     expect(env).not.toContain('DEVLAUNCH_PORT');
     expect(env).not.toContain('DEVLAUNCH_BROWSER');
     expect(env).not.toContain('DEVLAUNCH_NODE_VERSION');
+  });
+
+  it('carries an imported run config command through as-is (no npm script involved)', () => {
+    const env = generateLauncherEnv({
+      projectDir: '/x',
+      name: 'x',
+      slug: 'x',
+      command: 'node server.js --verbose',
+      port: 4173,
+      mode: 'headless',
+      openPath: '/',
+      browser: undefined,
+      readyTimeoutSeconds: 90,
+      packageManager: 'npm',
+      nodeVersion: undefined,
+      devlaunchVersion: '0.0.0',
+    });
+    expect(env).toContain('DEVLAUNCH_COMMAND="node server.js --verbose"');
   });
 
   it('escapes double quotes in values', () => {
@@ -197,7 +216,7 @@ describe('generateLauncherEnv', () => {
       projectDir: '/x',
       name: 'Say "Hi"',
       slug: 'say-hi',
-      script: undefined,
+      command: 'npm run dev',
       port: undefined,
       mode: 'terminal',
       openPath: '/',
@@ -214,6 +233,7 @@ describe('generateLauncherEnv', () => {
 describe('planBundle', () => {
   const baseInputs = {
     config: fakeConfig(),
+    command: 'npm run dev',
     projectDir: '/Users/me/my-app',
     packageManager: 'npm' as const,
     nodeVersion: { version: '20', source: 'nvmrc' as const },
@@ -328,6 +348,26 @@ describe('planBundle', () => {
     for (const file of plan.files) {
       expect(Boolean(file.executable)).toBe(file.relativePath === 'Contents/MacOS/launcher');
     }
+  });
+
+  it('threads inputs.command into launcher.env as DEVLAUNCH_COMMAND, not config.script', () => {
+    // Regression test: a project with no package.json dev script — only an
+    // imported .claude/launch.json run config — has no config.script to
+    // build "<packageManager> run <script>" from. The bundle must still run
+    // *something*, so the caller (see scripts/lib/generate-bundle.mjs, and
+    // eventually the CLI) resolves the real command once and it must reach
+    // the bundle untouched, not get silently dropped.
+    const plan = planBundle(
+      {
+        ...baseInputs,
+        config: fakeConfig({ script: undefined }),
+        command: 'node server.js',
+      },
+      { bundleLocation: '/Applications', registry: {} },
+    );
+    const launcherEnv = plan.files.find((f) => f.relativePath === 'Contents/Resources/launcher.env')
+      ?.content as string;
+    expect(launcherEnv).toContain('DEVLAUNCH_COMMAND="node server.js"');
   });
 
   it('embeds the icon bytes and vendored CLI text as-is', () => {

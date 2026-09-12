@@ -116,6 +116,35 @@ TEMPLATES="${BATS_TEST_DIRNAME}/../templates"
   [ "$status" -ne 0 ]
 }
 
+@test "Stop kills a grandchild process too (an npm-spawns-vite style tree)" {
+  # Regression test: a background job in a non-interactive shell isn't
+  # reliably its own process-group leader, so a plain process-group kill of
+  # the top PID can leave a supervised child (what "npm run dev" does with
+  # "vite"/"next", as opposed to exec-replacing itself) running and still
+  # holding the port. stop_pid must walk the real process tree.
+  setup_bundle
+  cat >"${MOCK_STATE_DIR}/server-behavior.sh" <<'EOF'
+#!/bin/sh
+sh -c 'echo "Local: http://localhost:4599/"; while true; do sleep 1; done' &
+echo "$!" >"${MOCK_STATE_DIR}/child-pid"
+wait
+EOF
+  chmod +x "${MOCK_STATE_DIR}/server-behavior.sh"
+  run_launcher
+  [ "$status" -eq 0 ]
+
+  local child_pid
+  child_pid="$(cat "${MOCK_STATE_DIR}/child-pid")"
+  run kill -0 "${child_pid}"
+  [ "$status" -eq 0 ] # sanity: it's genuinely running before we stop anything
+
+  echo "Stop" >"${MOCK_STATE_DIR}/dialog-button"
+  run_launcher
+  [ "$status" -eq 0 ]
+  run kill -0 "${child_pid}"
+  [ "$status" -ne 0 ] # the grandchild must be dead too, not just the top PID
+}
+
 @test "already running: Open reveals the app without starting a second copy" {
   setup_bundle
   write_ready_server
@@ -223,6 +252,23 @@ EOF
 @test "READY_TIMEOUT: shows the catalog dialog when it never becomes ready" {
   setup_bundle
   write_never_ready_server
+  echo "Cancel" >"${MOCK_STATE_DIR}/dialog-button"
+  run_launcher
+  [ "$status" -eq 0 ]
+  grep -q "taking too long to start" <(dialog_calls)
+}
+
+@test "READY_TIMEOUT: a ready line for the WRONG port does not count as ready" {
+  # Regression test: the ready-line match must require the configured port,
+  # not just any localhost URL — otherwise a misconfigured port (the
+  # examples/broken/wrong-port-config fixture) would be wrongly marked ready.
+  setup_bundle
+  cat >"${MOCK_STATE_DIR}/server-behavior.sh" <<'EOF'
+#!/bin/sh
+echo "Local: http://localhost:9999/"
+while true; do sleep 1; done
+EOF
+  chmod +x "${MOCK_STATE_DIR}/server-behavior.sh"
   echo "Cancel" >"${MOCK_STATE_DIR}/dialog-button"
   run_launcher
   [ "$status" -eq 0 ]

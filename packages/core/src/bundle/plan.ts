@@ -10,6 +10,15 @@ import { setLsUiElementHeadless, substitutePlaceholders } from './template.js';
 
 export interface BundlePlanInputs {
   readonly config: ResolvedLauncherConfig;
+  /**
+   * The full shell command that starts the dev server. Usually
+   * "<packageManager> run <config.script>", but a project with no dev
+   * script of its own — only an imported .claude/launch.json run config —
+   * has no script name to build that from, so the caller resolves the
+   * actual command once and passes it straight through (see
+   * ProjectDetection.importedRunConfig in src/detect).
+   */
+  readonly command: string;
   readonly projectDir: string;
   readonly packageManager: PackageManager;
   readonly nodeVersion: NodeVersionInfo | undefined;
@@ -102,7 +111,7 @@ export function planBundle(inputs: BundlePlanInputs, options: PlanBundleOptions)
     projectDir: inputs.projectDir,
     name,
     slug,
-    script: inputs.config.script,
+    command: inputs.command,
     port: inputs.config.port,
     mode: inputs.config.mode,
     openPath: inputs.config.openPath,
