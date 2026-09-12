@@ -101,7 +101,7 @@ pnpm build && pnpm smoke:macos
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| M1: works on my Mac | L1-1 core engine, L1-2 launcher runtime, L1-3 CLI | In progress — L1-1 done |
+| M1: works on my Mac | L1-1 core engine, L1-2 launcher runtime, L1-3 CLI | In progress — L1-1, L1-2 done |
 | M2: team- and agent-ready | L1-4 team onboarding, L1-5 developer Agent Skill | Not started |
 | M3: a stranger can do it | L1-6 release, README, site | Not started |
 | M4: launch | L1-7 launch kit | Not started |
@@ -116,7 +116,7 @@ that file and into the current milestone.
 
 ## Status
 
-**Current prompt:** L1-1 (Core engine) — done.
+**Current prompt:** L1-2 (Launcher runtime) — done.
 
 **Done:**
 - Prompt 1: monorepo scaffold (workspace, tooling, placeholder packages).
@@ -156,19 +156,61 @@ that file and into the current milestone.
     plist boolean tag that broke `plutil -lint` on the raw runtime
     template) and closed a gap (Info.plist never referenced its icon —
     added `CFBundleIconFile`).
-  - 169 tests in `packages/core`, all passing; typecheck/lint/build clean
+  - 171 tests in `packages/core`, all passing; typecheck/lint/build clean
     workspace-wide after every commit.
+- L1-2: gave `packages/runtime/templates/launcher.sh` its real logic — the
+  zsh script inside every generated `.app` bundle — covering all 8
+  behaviors from the spec: login shell + Node version activation
+  (NODE_NOT_FOUND / NODE_VERSION_MISSING), PROJECT_MOVED (working Locate
+  Folder… / Remove App), single instance via PID file with the Open/
+  Restart/Stop quick menu and stale-PID cleanup, dependency install gated
+  on `node_modules` + lockfile hash, PORT_IN_USE with a working Use
+  Another Port / Quit Other App, terminal (Terminal.app via a generated
+  wrapper script) and headless start with log rotation (5MB, keep 3),
+  ready detection (log regex, falling back to a port poll) with
+  SERVER_EXITED_EARLY / READY_TIMEOUT, and Copy Report (vendored CLI, with
+  a redacted shell-only fallback).
+  - ShellCheck has no zsh mode at all — the script is written in a
+    bash/zsh-compatible subset (`# shellcheck shell=bash`); a test-only
+    `DEVLAUNCH_TEST_PATH_PREPEND`/`_OVERRIDE` hook works around the login
+    shell's own `/etc/zprofile` reordering `PATH` on every invocation
+    (this surfaced as an actual GUI dialog appearing mid-test-run before
+    the fix — see the commit for what that looked like and why).
+  - 24 bats tests, all against the real script as a subprocess (not
+    sourced), with fakes for osascript/lsof/nc/ps/open/pbcopy/npm(+pnpm/
+    yarn/bun) recording calls and answering dialogs from files the test
+    controls (`test/mock-bin/`, `test/test_helper.bash`).
+  - `scripts/smoke-macos.sh`: the real end-to-end check — generates actual
+    bundles (via `scripts/lib/generate-bundle.mjs`, driving
+    `@devlaunch/core` directly since there's no CLI yet) for `next-app`
+    and `with-claude-launch-json`, and every `examples/broken/*` fixture;
+    starts each for real, checks the right outcome, force-kills anything
+    left blocked on a real dialog. Wired into CI's macOS job; run locally
+    with `pnpm smoke:macos`.
+  - Two real, non-shell-specific bugs the smoke test caught and fixed in
+    `packages/core` too: the bundle pipeline never threaded the
+    `.claude/launch.json` importer's command anywhere (only an npm script
+    *name* reached the bundle, so an imported-run-config-only project got
+    `npm run ""`) — `LauncherEnvInputs`/`BundlePlanInputs` now take a
+    resolved `command` string instead; and `stop_pid`'s process-group kill
+    silently failed because a background job in a non-interactive shell
+    isn't reliably its own process-group leader, which could leave a dev
+    command's supervised child (e.g. `vite`, spawned by `npm`) running
+    after Stop — replaced with a real recursive process-tree kill.
 
-**Next:** L1-2 — `packages/runtime`'s launcher.sh gets its real logic (it's
-still a placeholder): login shell + Node version activation, single-instance
-PID handling, dependency install, port-in-use handling, terminal/headless
-start, ready detection, and the Copy Report flow — driven by the
-`Resources/launcher.env` and `strings.sh` that `packages/core` already
-generates.
+**Next:** L1-3 — the `devlaunch` CLI itself (`init`, `open`, `status`,
+`list`, `stop`, `logs`, `report`, `doctor`, `uninstall`): the first thing
+that actually ties detection + config + the bundle plan + the platform
+adapter together for a real user, since today that orchestration only
+exists in `scripts/lib/generate-bundle.mjs` as a smoke-test stand-in.
 
 **Open questions:**
-- The vendored CLI (`Resources/devlaunch.mjs`) and the runtime template text
-  are passed into `planBundle`/`writeBundle` as plain strings rather than
-  read from disk by core (core stays dependency- and fs-write-free outside
-  `src/platform`) — confirm this is still the right seam once L1-3's CLI is
-  the one assembling those inputs for real.
+- `scripts/lib/generate-bundle.mjs`'s orchestration (detect → resolve
+  config → compute the run command → plan → write) is exactly what L1-3's
+  `init` command needs to do for real — worth treating as a rough draft
+  for that command rather than writing it from scratch, though it'll need
+  prompts, `--dry-run`, `--json`, and the exit-code contract L1-3 asks for.
+- The vendored CLI (`Resources/devlaunch.mjs`) is still a placeholder
+  string (`generate-bundle.mjs` embeds a comment saying so) — Copy Report's
+  "run the vendored CLI" path has never been exercised for real, only its
+  shell-only fallback. That only becomes testable once L1-3 exists.
